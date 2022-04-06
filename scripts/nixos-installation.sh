@@ -87,9 +87,9 @@ echo -e "\n<<< Config files imported successfully. >>>\n" || { echo -e "\n<<< Co
 
 # Install NixOS
 echo -e "\n<<< Installing NixOS. >>>\n"
-sudo nixos-install --no-root-passwd && \
+sudo nixos-install \
 echo -e "\n<<< NixOS installed successfully. >>>\n<<< You can reboot by typing 'sudo reboot' \
-and pressing enter. >>>\n<<< Don't forget to set root and user passwords after the reboot! >>>\n" || \
+and pressing enter. >>>\n<<< Don't forget to set user passwords after the reboot! >>>\n" || \
 { echo -e "\n<<< NixOS did not install successfully.! >>>\n" && exit 1; }
 
 exit 0
