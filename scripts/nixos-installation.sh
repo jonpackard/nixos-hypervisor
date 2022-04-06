@@ -3,13 +3,14 @@
 # This script could be called by putting it on a webserver (preferrably on the local LAN) and
 # running the following command from the nixos user shell in the nixos minimal installer.
 # !!needs testing!!
-# curl -s "http://10.0.0.80/nixos-installation.sh" | bash
+# curl -s "https://raw.githubusercontent.com/jonpackard/nixos-hypervisor/main/scripts/nixos-installation.sh" | bash
 
 # Define variables
 export userSpaceDependencies="nixos.screenfetch nixos.htop" # Packages to be installed in the temp environment
 export repoName="nixos-hypervisor-main" # This should match the repo-branch name format.
 export repoArchivePath="https://codeload.github.com/jonpackard/nixos-hypervisor/zip/refs/heads/main" # The path where the repo archive is hosted.
 export targetDisk="/dev/vda"
+export useHardwareConfigFromRepo = false # Disabled by default. Useful for deployments to identical hardware.
 
 # User confirmation before making changes.
 echo -e "\n<<< Disk Configuration >>>\n"
@@ -60,6 +61,7 @@ sudo partprobe
 
 # Mount partitions
 echo -e "\n<<< Mounting partitions. >>>\n"
+sleep 10 # Wait 10 seconds for disk labels to initialize
 sudo mount /dev/disk/by-label/nixos /mnt && \
 sudo mkdir -p /mnt/boot && \
 sudo mount /dev/disk/by-label/boot /mnt/boot && \
@@ -73,6 +75,9 @@ echo -e "\n<<< Config files generated successfully. >>>\n" || { echo -e "\n<<< C
 
 # Import configs from repo archive
 echo -e "\n<<< Importing config files from repo archive. >>>\n"
+if [ $useHardwareConfigFromRepo != true ]; then
+    rm -f ./"$repoName"/nixos/hardware-configuration.nix
+fi
 sudo cp -fv ./"$repoName"/nixos/*.nix /mnt/etc/nixos/ && \
 sudo chmod 644 /mnt/etc/nixos/*.nix && \
 
