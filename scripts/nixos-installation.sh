@@ -6,11 +6,11 @@
 # curl -s "https://raw.githubusercontent.com/jonpackard/nixos-hypervisor/main/scripts/nixos-installation.sh" | bash
 
 # Define variables
-export userSpaceDependencies="nixos.screenfetch nixos.htop" # Packages to be installed in the temp environment
+export userSpaceDependencies="nixos.screenfetch nixos.htop" # Packages to be installed in the temp environment. These are placeholders. The variable can be empty.
 export repoName="nixos-hypervisor-main" # This should match the repo-branch name format.
 export repoArchivePath="https://codeload.github.com/jonpackard/nixos-hypervisor/zip/refs/heads/main" # The path where the repo archive is hosted.
 export targetDisk="/dev/vda"
-export useHardwareConfigFromRepo = false # Disabled by default. Useful for deployments to identical hardware.
+export useHardwareConfigFromRepo=false # Disabled by default. Useful for deployments to identical hardware.
 
 # User confirmation before making changes.
 echo -e "\n<<< Disk Configuration >>>\n"
@@ -23,6 +23,9 @@ then
     echo -e "\n<<< Script aborted! >>>\n"
     exit 1
 fi
+
+# Make sure all disks are unmounted in case re-running from a failed install. Ignore errors.
+sudo sh -c " umount /mnt/boot; umount /mnt; swapoff /dev/disk/by-label/swap;" > /dev/null 2>&1
 
 # Install user-space dependencies.
 echo -e "\n<<< Installing dependencies. >>>\n"
@@ -75,11 +78,21 @@ echo -e "\n<<< Config files generated successfully. >>>\n" || { echo -e "\n<<< C
 
 # Import configs from repo archive
 echo -e "\n<<< Importing config files from repo archive. >>>\n"
-if [ $useHardwareConfigFromRepo != true ]; then
+if [ "$useHardwareConfigFromRepo" = false ]; then
     rm -f ./"$repoName"/nixos/hardware-configuration.nix
 fi
 sudo cp -fv ./"$repoName"/nixos/*.nix /mnt/etc/nixos/ && \
 sudo chmod 644 /mnt/etc/nixos/*.nix && \
+echo -e "\n<<< Config files imported successfully. >>>\n" || { echo -e "\n<<< Config files import failed! >>>\n" && exit 1; }
+
+# Install NixOS
+echo -e "\n<<< Installing NixOS. >>>\n"
+sudo nixos-install --no-root-passwd && \
+echo -e "\n<<< NixOS installed successfully. >>>\n<<< You can reboot by typing 'sudo reboot' \
+and pressing enter. >>>\n<<< Don't forget to set root and user passwords after the reboot! >>>\n" || \
+{ echo -e "\n<<< NixOS did not install successfully.! >>>\n" && exit 1; }
+
+exit 0
 
 
 
